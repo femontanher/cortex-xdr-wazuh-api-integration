@@ -105,8 +105,8 @@ Runtime directories created during installation:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/femontanher/Cortex-XDR-integration-with-Wazuh-via-API.git
-cd cortex-wazuh-integration
+git clone https://github.com/femontanher/cortex-xdr-wazuh-api-integration
+cd cortex-xdr-wazuh-api-integration
 ```
 
 ### 2. Create directories and files
