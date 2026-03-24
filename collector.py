@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Cortex XDR → Wazuh Collector (Versão Estabilizada v8)
-Solução Definitiva: Deduplicação por Hash Imutável + Resiliência de Endpoints
-"""
-
 import hashlib, secrets, string, datetime, json, logging, time
 import requests
 from pathlib import Path
@@ -41,11 +36,8 @@ def api_post(path: str, payload: dict) -> dict:
     url  = f"https://{FQDN}/public_api/v1{path}"
     resp = requests.post(url, headers=get_headers(), json=payload, timeout=30)
     resp.raise_for_status()
-    
-    # A API do Cortex às vezes retorna o conteúdo de 'reply' diretamente como uma lista 
-    # ou como um dicionário contendo a chave. Vamos tratar ambos.
-    return resp.json().get("reply", {})
 
+    return resp.json().get("reply", {})
 
 # ── Paginação ──────────────────────────────────────────────
 def api_post_paginated(path: str, base_payload: dict, items_key: str) -> list:
@@ -59,7 +51,6 @@ def api_post_paginated(path: str, base_payload: dict, items_key: str) -> list:
 
         reply = api_post(path, payload)
         
-        # Se o reply for uma lista (comum em alguns endpoints), usamos ela diretamente
         if isinstance(reply, list):
             items = reply
         else:
@@ -179,7 +170,6 @@ def collect_endpoints(endpoint_cache: dict) -> dict:
     try:
         reply = api_post("/endpoints/get_endpoints", {"request_data": {}})
         
-        # TRATAMENTO DE ERRO: Se a API retornar uma lista diretamente em vez de um dicionário
         if isinstance(reply, list):
             items = reply
         else:
