@@ -21,6 +21,7 @@ The solution handles authentication with the Cortex XDR API, periodically retrie
 - [Configuration Reference](#configuration-reference)
 - [Running and Monitoring](#running-and-monitoring)
 - [Dependencies](#dependencies)
+- [Wazuh Configuration](#wazuh-configuration)
 - [License](#license)
 
 ---
@@ -104,7 +105,7 @@ Runtime directories created during installation:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/cortex-wazuh-integration.git
+git clone https://github.com/femontanher/Cortex-XDR-integration-with-Wazuh-via-API.git
 cd cortex-wazuh-integration
 ```
 
@@ -271,6 +272,81 @@ systemctl restart cortex-collector
 | `time` | Python standard library | Poll interval sleep |
 | `pathlib` | Python standard library | Cross-platform path manipulation |
 | `config` | Local project file | User-defined settings — **not a PyPI package** |
+
+---
+
+## Wazuh Configuration
+
+After the collector is running and writing alerts to disk, Wazuh needs three additional configuration steps to parse and index them correctly: installing the custom **decoder**, installing the custom **rules**, and registering the log file as a monitored input.
+
+### 1. Install the decoder
+
+Download the decoder file from this repository and place it in the Wazuh decoders directory:
+
+```bash
+/var/ossec/etc/decoders/cortex_xdr_decoders.xml
+```
+
+Set the correct ownership and permissions:
+
+```bash
+chown wazuh:wazuh /var/ossec/etc/decoders/cortex_xdr_decoders.xml
+chmod 640 /var/ossec/etc/decoders/cortex_xdr_decoders.xml
+```
+
+### 2. Install the rules
+
+Download the rules file from this repository and place it in the Wazuh rules directory:
+
+```bash
+/var/ossec/etc/rules/cortex_xdr_rules.xml
+```
+
+Set the correct ownership and permissions:
+
+```bash
+chown wazuh:wazuh /var/ossec/etc/rules/cortex_xdr_rules.xml
+chmod 640 /var/ossec/etc/rules/cortex_xdr_rules.xml
+```
+
+### 3. Register the log file in `ossec.conf`
+
+Edit the Wazuh main configuration file to add the Cortex XDR alert log as a monitored input:
+
+```bash
+nano /var/ossec/etc/ossec.conf
+```
+
+Append the following block **before the closing `</ossec_config>` tag**:
+
+```xml
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/ossec/logs/cortex_xdr/alerts.json</location>
+</localfile>
+```
+
+> ℹ️ Make sure the `<location>` path matches the `LOG_FILE` value defined in your `config.py`.
+
+### 4. Validate and restart Wazuh
+
+Before restarting, validate the configuration to catch any syntax errors:
+
+```bash
+/var/ossec/bin/wazuh-logtest
+```
+
+Then restart the Wazuh Manager to apply all changes:
+
+```bash
+systemctl restart wazuh-manager
+```
+
+Confirm the decoder and rules were loaded without errors:
+
+```bash
+journalctl -u wazuh-manager --since "1 minute ago" | grep -i cortex
+```
 
 ---
 
